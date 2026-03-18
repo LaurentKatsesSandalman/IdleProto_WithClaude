@@ -30,7 +30,7 @@ export function GeneratorRow({
   const name = getGeneratorName(rank);
   const prodPerUnit = getEffectiveProdPerUnit(rank, prestigeMultiplier);
   const cps = count.mul(prodPerUnit);
-  const payback = getNextPrice(rank, count, 1).div(prodPerUnit);
+//   const payback = getNextPrice(rank, count, 1).div(prodPerUnit);
 
   const affordable = batchSize === 'max' ? getMaxAffordable(rank, count, currency) : null;
   const price = batchSize === 'max'
@@ -53,7 +53,7 @@ export function GeneratorRow({
         <span className="gen-name">{name} : produit {formatDecimal(prodPerUnit)}/s</span>
         <span className="gen-owned">{count.toFixed(0)} possédé</span>
         <span className="gen-cps">{formatDecimal(cps)}/s</span>
-        <span className="gen-payback">rentabilisation : {formatDecimal(payback)}s</span>
+        {/* <span className="gen-payback">rentabilisation : {formatDecimal(payback)}s</span> */}
       </div>
       <button className="buy-btn" disabled={!canAfford} onClick={onBuy}>
         {buyLabel}

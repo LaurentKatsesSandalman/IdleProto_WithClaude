@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import {
   computeNextMultiplier,
-  computePrestigeBreakdown,
-  formatDecimal,
+//   computePrestigeBreakdown,
+//   formatDecimal,
   formatMultiplier,
-  getGeneratorName,
+//   getGeneratorName,
 } from '../game/formulas';
 import type { GameAction } from '../game/reducer';
 import type { GameState } from '../game/types';
@@ -20,7 +20,7 @@ export function ResetTab({ state, dispatch }: ResetTabProps) {
 
   const nextMultiplier = computeNextMultiplier(state.generators);
   const canReset = nextMultiplier.gt(state.prestigeMultiplier);
-  const breakdown = computePrestigeBreakdown(state.generators);
+//   const breakdown = computePrestigeBreakdown(state.generators);
 
   function handleConfirm() {
     dispatch({ type: 'RESET' });
@@ -41,7 +41,7 @@ export function ResetTab({ state, dispatch }: ResetTabProps) {
           </span>
         </div>
 
-        {breakdown.length > 0 && (
+        {/* {breakdown.length > 0 && (
           <div className="prestige-breakdown">
             <ul className="breakdown-list">
               {breakdown.map(({ rank, contribution }) => (
@@ -57,7 +57,7 @@ export function ResetTab({ state, dispatch }: ResetTabProps) {
               <strong>×{formatDecimal(nextMultiplier)}</strong>
             </div>
           </div>
-        )}
+        )} */}
 
         <p className="reset-hint">
           {canReset
