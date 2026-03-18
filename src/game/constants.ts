@@ -15,7 +15,7 @@ export const RANK_MULTIPLIER = new Decimal(10);
 export const INFLATION = 0.25;
 
 /** Production ratio decay per rank */
-export const USURE = 0.25;
+export const USURE = 0.75;
 
 /** Interval between TICK dispatches in milliseconds */
 export const TICK_INTERVAL_MS = 100;
