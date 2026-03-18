@@ -6,6 +6,9 @@ import Decimal from 'break_infinity.js';
  */
 export type GeneratorMap = Map<number, Decimal>;
 
+/** Batch size for buy actions. 'max' means "buy as many as currently affordable". */
+export type BatchSize = 1 | 10 | 100 | 'max';
+
 export interface GameState {
   /** Current currency owned by the player */
   currency: Decimal;
