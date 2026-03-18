@@ -1,0 +1,14 @@
+J'ai relu, le code me convient
+A présent, passons sur l'architecture des composants et ajoutons des premières adaptations liées aux attributs de chaque objet ou à certains composant
+* Header contient titre (déjà présent), currency (idem), prestige multiplier (idem), currency per second (manquant)
+* TabSelector contient deux tab, avec toggle de l'une vers l'autre : ProdTab à gauche, et ResetTab à droite
+* Dans ProdTab
+** GeneratorList contient tous les générateurs débloqués, sous forme de GeneratorRow
+** GeneratorRow ne contient pas le rank mais un nom généré automatiquement (voir plus bas), le owned (déjà présent), le next cost (sans mention "next cost") directement accessible dans le bouton buy avec buy: cost, la production actuelle par seconde (c'est à dire count.mul(getProductionPerSecond(rank)).mul(state.prestigeMultiplier))
+NB: GeneratorList est visuellement séparé du reste (par exemple avec un encadrement) et de même chaque GeneratorRow est visible dans un cadre qui lui donne une existence propre
+** A terme, en haut de ProdTab, avant GeneratorList, il y aura aussi un toggle à 3 boutons 1/10/100 pour acheter par lot. Dans ce cas, dans GeneratorRow,  le prix est mis à jour pour 1/10/100 achats ; nécessite la création des fonctions getNextPrice10 et getNextPrice100, ou un changement de getNextPrice pour avoir getNextPrice(rank: number, currentCount: Decimal, batchSize:1|10|100)
+* Dans ResetTab:
+** Un cadre avec le mutltiplicateur actuel, le prochain multiplicateur si on resettait maintenant, une phrase d'explication, un bouton reset avec confirm ; pour ne pas se faire chier avec "on garde le meilleur multiplicateur", on va dire que le bouton reset ne devient actif que si on a accès à un meilleur multiplicateur. Cliquer reset provoque une pop-up qui dit quelque chose du genre "confirmez vous le reset ? tout va être remis à zéro mais votre multiplicateur de production sera {valeur}". Il est possible de fermer la pop-up sans confirmer, ce qui annule la demande de reset (il n'a pas eu lieu, et il n'aura pas lieu).
+
+il y a virtuellement une infinité de générateurs ; ils ne sont donc pas listables ; la seule donnée qui n'était pas générée est le nom, mais on peut le rendre générable ainsi : tous les générateurs s'appellent Gen[LETTRES], avec [LETTRES] qui dépend de la puissance de 10 du prix du premier; par exemple, celui à 10 s'appelle GenA, celui à 1000 GenC, celui à 10^76 GenZZX (26+26+24)
+ 

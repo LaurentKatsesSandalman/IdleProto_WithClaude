@@ -1,0 +1,32 @@
+Notre but à terme est de construire une application web reactive desktop/mobile en typescript avec la dernière version de React.
+
+Cette application sera un idle game dont voici les principes :
+* Le joueur commence avec une somme de currency INITIAL_CURRENCY
+* Un générateur a un coût d'achat en currency et produit de la currency tous les TICKS
+* Un générateur a un rang
+* Un générateur peut être acheté en plusieurs exemplaires ; il n'y a pas de limite au nombre de générateurs de rang N que le joueur possède.
+* Posséder au moins un générateur de rang N débloque et affiche dans l'UI le générateur de rang N+1
+* Le premier exemplaire du générateur de rang 1 coûte PRIX_INITIAL et génère par seconde RATIO_INITIAL*PRIX_INITIAL currency. PRIX_INITIAL = INITIAL_CURRENCY. Pour l'instant, PRIX_INITIAL vaut 10 et RATIO_INITIAL vaut 10%
+* Le premier exemplaire d'un générateur de rang N coûte PrixInitialPourN qui est égal à PrinInitialPour(N-1) * RANK_MULTIPLIER. Pour l'instant, RANK_MULTIPLIER vaut 100
+* Le p-ième exemplaire d'un générateur de rang N coûte PrixPiemePourN qui est égal à Prix(P-1)iemePourN * (1+INFLATION). Pour l'instant, INFLATION vaut 0.05.
+* Tous les générateurs de rang N ont la même production par seconde. Cette production ProdRangN vaut PrixInitialPourN*RatioPourN avec RatioPourN = RatioPour(N-1) * (1-USURE). Pour l'instant, USURE vaut 10%.
+
+Cette application sera un idle game et devra donc gérer des nombres très importants ; l'application utilisera donc break_infinity pour tous les calculs de currency, prix et production
+
+Le joueur a la possibilité de "reset". Lorsqu'il le fait, sa currency revient à INITIAL_CURRENCY et il perd tous ses générateurs de tous les rangs ; mais il profite d'un multiplicateur CurrentMultiplier qui s'applique à la production de tous ses générateurs ; ainsi, posséder P générateurs de rang N lui permet de produire par seconde P * ProdRangN * CurrentMultiplier.
+CurrentMultiplier est calculé au moment du reset et vaut : (Nombre de générateurs possédés de rang 1) * (Nombre de générateurs possédés de rang 2) * (Nombre de générateurs possédés de rang 3) * [...même principe...] * (Nombre de générateurs possédés de rang Q) avec Q = plus haut rang atteint avant le reset.
+
+Ta première mission est de créer le reducer et le state
+
+Le state contient :
+* la currency actuelle
+* une map qui pour chaque rang où le joueur possède au moins un générateur associe un rang et un nombre de générateurs possédés
+* le CurrentMultiplier que nous appellerons aussi "multiplicateur de rest" ou "multiplicateur de prestige"
+Le state doit stocker des valeurs de type break_infinity plutôt que des numbers
+
+Le reducer doit avoir au moins ces actions :
+BUY : acheter un exemplaire d'un générateur de rang N (payload : le rang)
+TICK : avancer le temps d'un delta et créditer la currency produite (payload : le delta en ms)
+RESET : déclencher le prestige
+
+Le tick sera un interval régulier qui dispatch un TICK toutes les X ms (pour l'instant, X = 100)
