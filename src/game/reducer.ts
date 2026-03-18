@@ -1,6 +1,6 @@
 import Decimal from 'break_infinity.js';
 import { INITIAL_CURRENCY } from './constants';
-import { getMaxAffordable, getNextPrice, getProductionPerSecond, getTotalPriceForBatch } from './formulas';
+import { computeNextMultiplier, getEffectiveProdPerUnit, getMaxAffordable, getNextPrice, getTotalPriceForBatch } from './formulas';
 import type { GameState } from './types';
 
 // ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       let totalProduction = new Decimal(0);
       for (const [rank, count] of state.generators) {
         totalProduction = totalProduction.add(
-          count.mul(getProductionPerSecond(rank)).mul(state.prestigeMultiplier),
+          count.mul(getEffectiveProdPerUnit(rank, state.prestigeMultiplier)),
         );
       }
 
@@ -86,16 +86,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Don't reset if the player owns no generators (no meaningful multiplier)
       if (state.generators.size === 0) return state;
 
-      // New prestige multiplier = product of all generator counts
-      let newMultiplier = new Decimal(1);
-      for (const [, count] of state.generators) {
-        newMultiplier = newMultiplier.mul(count);
-      }
-
       return {
         currency: new Decimal(INITIAL_CURRENCY),
         generators: new Map(),
-        prestigeMultiplier: newMultiplier,
+        prestigeMultiplier: computeNextMultiplier(state.generators),
       };
     }
 

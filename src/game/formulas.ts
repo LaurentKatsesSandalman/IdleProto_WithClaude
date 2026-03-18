@@ -7,7 +7,7 @@ import {
   RATIO_INITIAL,
   USURE,
 } from './constants';
-import type { GeneratorMap, PrestigeFormula, PrestigeFormulaId } from './types';
+import type { GeneratorMap, PrestigeBreakdownEntry, PrestigeFormulaId } from './types';
 
 /**
  * Base price of the FIRST copy of a rank-N generator.
@@ -73,6 +73,15 @@ export function getGeneratorName(rank: number): string {
 }
 
 /**
+ * Effective production per second of ONE generator of rank N, after prestige multiplier.
+ * Ceiled to an integer so that the displayed value and the actual TICK computation agree.
+ * (The ceil becomes a no-op in scientific notation where fractions are negligible.)
+ */
+export function getEffectiveProdPerUnit(rank: number, prestigeMultiplier: Decimal): Decimal {
+  return getProductionPerSecond(rank).mul(prestigeMultiplier).ceil();
+}
+
+/**
  * Total currency produced per second across all generators.
  */
 export function computeTotalCPS(
@@ -81,21 +90,9 @@ export function computeTotalCPS(
 ): Decimal {
   let total = new Decimal(0);
   for (const [rank, count] of generators) {
-    total = total.add(count.mul(getProductionPerSecond(rank)).mul(prestigeMultiplier));
+    total = total.add(count.mul(getEffectiveProdPerUnit(rank, prestigeMultiplier)));
   }
   return total;
-}
-
-/**
- * V1 — product of all generator counts.
- * e.g. 234 GenA + 5 GenC → 234 × 5 = 1170
- */
-export function computeNextMultiplier_V1(generators: GeneratorMap): Decimal {
-  let mult = new Decimal(1);
-  for (const [, count] of generators) {
-    mult = mult.mul(count);
-  }
-  return mult;
 }
 
 /** Number of decimal digits of a Decimal integer (e.g. 234 → 3, 999 → 3, 1000 → 4). */
@@ -104,32 +101,33 @@ function digitCount(n: Decimal): number {
 }
 
 /**
- * V2 — product of the digit-count of each generator count.
- * e.g. 234 GenA (3 digits) + 5 GenC (1 digit) → 3 × 1 = 3
- * Owning 999 or 234 of the same rank both contribute 3.
+ * Per-rank contribution functions — UNIQUE source de vérité pour chaque formule.
+ * Pour ajouter une version : ajouter une entrée ici, c'est tout.
+ *
+ * v1 — contribution = count lui-même      (234 GenA → ×234)
+ * v2 — contribution = nb de digits + 0.5  (234 GenA → ×3.5, car 3 digits)
  */
-function computeNextMultiplier_V2(generators: GeneratorMap): Decimal {
-  let mult = new Decimal(1);
-  for (const [, count] of generators) {
-    mult = mult.mul(digitCount(count)+1);
-  }
-  return mult;
-}
-
-/**
- * Registry of all prestige formulas.
- * To add a new one: implement the function above, then add an entry here.
- * PrestigeFormulaId is automatically derived from the keys — no type to update manually.
- */
-const PRESTIGE_FORMULAS: Record<PrestigeFormulaId, PrestigeFormula> = {
-  v1: computeNextMultiplier_V1,
-  v2: computeNextMultiplier_V2,
+type ContributionFn = (count: Decimal) => Decimal;
+const PRESTIGE_CONTRIBUTIONS: Record<PrestigeFormulaId, ContributionFn> = {
+  v1: (count) => count,
+  v2: (count) => new Decimal(digitCount(count) + 0.5),
 };
-
 
 /** Active prestige formula — switch via PRESTIGE_FORMULA in constants.ts. */
 export function computeNextMultiplier(generators: GeneratorMap): Decimal {
-  return PRESTIGE_FORMULAS[PRESTIGE_FORMULA](generators);
+  return computePrestigeBreakdown(generators)
+    .reduce((acc, { contribution }) => acc.mul(contribution), new Decimal(1));
+}
+
+/**
+ * Breakdown of the prestige multiplier by rank, sorted by rank ascending.
+ * Used for display in the prestige tab.
+ */
+export function computePrestigeBreakdown(generators: GeneratorMap): PrestigeBreakdownEntry[] {
+  const fn = PRESTIGE_CONTRIBUTIONS[PRESTIGE_FORMULA];
+  return Array.from(generators.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([rank, count]) => ({ rank, contribution: fn(count) }));
 }
 
 /**
@@ -177,7 +175,7 @@ function withThousandsSep(s: string): string {
  * Human-readable number formatting for the UI.
  */
 export function formatDecimal(d: Decimal): string {
-  if (d.lt(1e6)) return withThousandsSep(d.toFixed(0));
+  if (d.lt(1e6)) return withThousandsSep(d.ceil().toFixed(0));
   return d.toExponential(2);
 }
 
@@ -186,5 +184,14 @@ export function formatDecimal(d: Decimal): string {
  */
 export function formatPrice(d: Decimal): string {
   if (d.lt(1e6)) return withThousandsSep(d.toFixed(0));
+  return d.toExponential(2);
+}
+
+/**
+ * Formatting for multipliers — shows up to 2 decimal places, trailing zeros trimmed.
+ * e.g. 2.0 → "2", 1.5 → "1.5", 1.50 → "1.5"
+ */
+export function formatMultiplier(d: Decimal): string {
+  if (d.lt(1e6)) return withThousandsSep(d.toFixed(2).replace(/\.?0+$/, ''));
   return d.toExponential(2);
 }

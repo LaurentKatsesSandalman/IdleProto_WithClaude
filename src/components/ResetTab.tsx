@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { computeNextMultiplier, formatDecimal } from '../game/formulas';
+import {
+  computeNextMultiplier,
+  computePrestigeBreakdown,
+  formatDecimal,
+  formatMultiplier,
+  getGeneratorName,
+} from '../game/formulas';
 import type { GameAction } from '../game/reducer';
 import type { GameState } from '../game/types';
 import { ConfirmModal } from './ConfirmModal';
@@ -14,6 +20,7 @@ export function ResetTab({ state, dispatch }: ResetTabProps) {
 
   const nextMultiplier = computeNextMultiplier(state.generators);
   const canReset = nextMultiplier.gt(state.prestigeMultiplier);
+  const breakdown = computePrestigeBreakdown(state.generators);
 
   function handleConfirm() {
     dispatch({ type: 'RESET' });
@@ -25,14 +32,33 @@ export function ResetTab({ state, dispatch }: ResetTabProps) {
       <div className="reset-panel">
         <div className="reset-row">
           <span className="reset-label">Multiplicateur actuel</span>
-          <span className="reset-value">×{formatDecimal(state.prestigeMultiplier)}</span>
+          <span className="reset-value">×{formatMultiplier(state.prestigeMultiplier)}</span>
         </div>
         <div className="reset-row">
           <span className="reset-label">Prochain multiplicateur</span>
           <span className={`reset-value${canReset ? ' better' : ''}`}>
-            ×{formatDecimal(nextMultiplier)}
+            ×{formatMultiplier(nextMultiplier)}
           </span>
         </div>
+
+        {breakdown.length > 0 && (
+          <div className="prestige-breakdown">
+            <ul className="breakdown-list">
+              {breakdown.map(({ rank, contribution }) => (
+                <li key={rank} className="breakdown-entry">
+                  <span className="breakdown-name">{getGeneratorName(rank)}</span>
+                  <span className="breakdown-contrib">×{formatMultiplier(contribution)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="breakdown-formula">
+              {breakdown.map(({ contribution }) => formatMultiplier(contribution)).join(' × ')}
+              {' = '}
+              <strong>×{formatDecimal(nextMultiplier)}</strong>
+            </div>
+          </div>
+        )}
+
         <p className="reset-hint">
           {canReset
             ? 'Vous pouvez effectuer un prestige pour booster votre production.'

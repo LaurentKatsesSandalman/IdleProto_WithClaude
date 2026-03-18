@@ -15,6 +15,12 @@ export type PrestigeFormulaId = string;
 /** A prestige formula takes the current generators and returns the next multiplier. */
 export type PrestigeFormula = (generators: GeneratorMap) => Decimal;
 
+/** One rank's contribution to the prestige multiplier, for display purposes. */
+export interface PrestigeBreakdownEntry {
+  rank: number;
+  contribution: Decimal;
+}
+
 export interface GameState {
   /** Current currency owned by the player */
   currency: Decimal;
