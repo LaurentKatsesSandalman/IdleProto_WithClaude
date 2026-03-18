@@ -18,7 +18,7 @@ export function Header({ currency, prestigeMultiplier, totalCPS }: HeaderProps) 
         </span>
         <span className="stat-sep" />
         <span className="stat">
-          <span className="stat-label">Per second</span>
+          <span className="stat-label">par seconde</span>
           <span className="stat-value">{formatDecimal(totalCPS)}/s</span>
         </span>
         <span className="stat-sep" />

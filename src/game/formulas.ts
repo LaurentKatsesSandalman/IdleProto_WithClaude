@@ -47,11 +47,11 @@ export function getNextPrice(
   const inflation = new Decimal(1 + INFLATION);
   const firstCost = base.mul(inflation.pow(currentCount));
 
-  if (batchSize === 1) return firstCost;
+  if (batchSize === 1) return firstCost.ceil();
 
   // Geometric series multiplier: ((1+INFLATION)^batchSize - 1) / INFLATION
   const seriesMultiplier = inflation.pow(batchSize).sub(1).div(INFLATION);
-  return firstCost.mul(seriesMultiplier);
+  return firstCost.mul(seriesMultiplier).ceil();
 }
 
 /**
@@ -128,13 +128,28 @@ export function getTotalPriceForBatch(
     getBasePrice(rank),
     new Decimal(1 + INFLATION),
     currentCount,
-  );
+  ).ceil();
+}
+
+/** Inserts a non-breaking space every 3 digits on the integer part. */
+function withThousandsSep(s: string): string {
+  const [int, dec] = s.split('.');
+  const formatted = int.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+  return dec !== undefined ? `${formatted}.${dec}` : formatted;
 }
 
 /**
  * Human-readable number formatting for the UI.
  */
 export function formatDecimal(d: Decimal): string {
-  if (d.lt(1e6)) return d.toFixed(2);
+  if (d.lt(1e6)) return withThousandsSep(d.toFixed(0));
+  return d.toExponential(2);
+}
+
+/**
+ * Formatting for prices (always integers after ceil — no decimal places below 1e6).
+ */
+export function formatPrice(d: Decimal): string {
+  if (d.lt(1e6)) return withThousandsSep(d.toFixed(0));
   return d.toExponential(2);
 }
