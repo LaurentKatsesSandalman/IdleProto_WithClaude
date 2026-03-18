@@ -9,6 +9,12 @@ export type GeneratorMap = Map<number, Decimal>;
 /** Batch size for buy actions. 'max' means "buy as many as currently affordable". */
 export type BatchSize = 1 | 10 | 100 | 'max';
 
+/** Identifier for a prestige formula. Change PRESTIGE_FORMULA in constants.ts to switch. */
+export type PrestigeFormulaId = string;
+
+/** A prestige formula takes the current generators and returns the next multiplier. */
+export type PrestigeFormula = (generators: GeneratorMap) => Decimal;
+
 export interface GameState {
   /** Current currency owned by the player */
   currency: Decimal;

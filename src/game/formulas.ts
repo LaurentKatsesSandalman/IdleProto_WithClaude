@@ -1,12 +1,13 @@
 import Decimal from 'break_infinity.js';
 import {
   INFLATION,
+  PRESTIGE_FORMULA,
   PRIX_INITIAL,
   RANK_MULTIPLIER,
   RATIO_INITIAL,
   USURE,
 } from './constants';
-import type { GeneratorMap } from './types';
+import type { GeneratorMap, PrestigeFormula, PrestigeFormulaId } from './types';
 
 /**
  * Base price of the FIRST copy of a rank-N generator.
@@ -86,15 +87,49 @@ export function computeTotalCPS(
 }
 
 /**
- * Prestige multiplier the player would gain if they reset now.
- * = product of all generator counts (1 if no generators).
+ * V1 — product of all generator counts.
+ * e.g. 234 GenA + 5 GenC → 234 × 5 = 1170
  */
-export function computeNextMultiplier(generators: GeneratorMap): Decimal {
+export function computeNextMultiplier_V1(generators: GeneratorMap): Decimal {
   let mult = new Decimal(1);
   for (const [, count] of generators) {
     mult = mult.mul(count);
   }
   return mult;
+}
+
+/** Number of decimal digits of a Decimal integer (e.g. 234 → 3, 999 → 3, 1000 → 4). */
+function digitCount(n: Decimal): number {
+  return Math.floor(n.log10()) + 1;
+}
+
+/**
+ * V2 — product of the digit-count of each generator count.
+ * e.g. 234 GenA (3 digits) + 5 GenC (1 digit) → 3 × 1 = 3
+ * Owning 999 or 234 of the same rank both contribute 3.
+ */
+function computeNextMultiplier_V2(generators: GeneratorMap): Decimal {
+  let mult = new Decimal(1);
+  for (const [, count] of generators) {
+    mult = mult.mul(digitCount(count)+1);
+  }
+  return mult;
+}
+
+/**
+ * Registry of all prestige formulas.
+ * To add a new one: implement the function above, then add an entry here.
+ * PrestigeFormulaId is automatically derived from the keys — no type to update manually.
+ */
+const PRESTIGE_FORMULAS: Record<PrestigeFormulaId, PrestigeFormula> = {
+  v1: computeNextMultiplier_V1,
+  v2: computeNextMultiplier_V2,
+};
+
+
+/** Active prestige formula — switch via PRESTIGE_FORMULA in constants.ts. */
+export function computeNextMultiplier(generators: GeneratorMap): Decimal {
+  return PRESTIGE_FORMULAS[PRESTIGE_FORMULA](generators);
 }
 
 /**
